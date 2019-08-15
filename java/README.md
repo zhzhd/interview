@@ -61,7 +61,76 @@ SecurityException （安全异常）
 #### （7）自旋锁
 在Java中，自旋锁是指尝试获取锁的线程不会立即阻塞，而是采用循环的方式去尝试获取锁，这样的好处是减少线程上下文切换的消耗，缺点是循环会消耗CPU。
 
-### 2、volatile关键字解决了什么问题，实现原理是什么
+### 2、Java内存模型
+为了保证共享内存的正确性（可见性、有序性、原子性），内存模型定义了共享内存系统中多线程程序读写操作行为的规范。内存模型解决并发问题主要采用两种方式：限制处理器优化和使用内存屏障。
+Java内存模型（Java Memory Model ,JMM）就是一种符合内存模型规范的，屏蔽了各种硬件和操作系统的访问差异的，保证了Java程序在各种平台下对内存的访问都能保证效果一致的机制及规范。
+JMM是一种规范，目的是解决由于多线程通过共享内存进行通信时，存在的本地内存数据不一致、编译器会对代码指令重排序、处理器会对代码乱序执行等带来的问题。目的是保证并发编程场景中的原子性、可见性和有序性。
+#### （1）Java内存模型的实现
+在Java中提供了一系列和并发处理相关的关键字，比如volatile、synchronized、final、concurren包等。其实这些就是Java内存模型封装了底层的实现后提供给程序员使用的一些关键字。
+#### （2）原子性
+为了保证原子性，提供了两个高级的字节码指令monitorenter和monitorexit。在Java中可以使用synchronized来保证方法和代码块内的操作是原子性的。
+#### （3）可见性
+Java中的volatile关键字提供了一个功能，那就是被其修饰的变量在被修改后可以立即同步到主内存，被其修饰的变量在每次是用之前都从主内存刷新。因此，可以使用volatile来保证多线程操作时变量的可见性。synchronized和final两个关键字也可以实现可见性
+#### （4）有序性
+在Java中，可以使用synchronized和volatile来保证多线程之间操作的有序性。实现方式有所区别：volatile关键字会禁止指令重排。synchronized关键字保证同一时刻只允许一条线程操作。
+
+### 3、synchronized关键字
+#### （1）synchronized的用法
+synchronized是Java提供的一个并发控制的关键字。主要有两种用法，分别是同步方法和同步代码块。
+```
+public class SynchronizedTest {
+      //同步方法
+     public synchronized void doSth1(){
+         System.out.println("Hello World");
+     }
+     //同步代码块
+     public void doSth2(){
+         synchronized (SynchronizedTest.class){
+             System.out.println("Hello World");
+         }
+     }
+ }
+```
+#### （2）synchronized的实现原理
+我们对上面的代码进行反编译，可以得到如下代码：
+```
+public synchronized void doSth();
+    descriptor: ()V
+    flags: ACC_PUBLIC, ACC_SYNCHRONIZED
+    Code:
+      stack=2, locals=1, args_size=1
+         0: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+         3: ldc           #3                  // String Hello World
+         5: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+         8: return
+
+  public void doSth1();
+    descriptor: ()V
+    flags: ACC_PUBLIC
+    Code:
+      stack=2, locals=3, args_size=1
+         0: ldc           #5                  // class com/hollis/SynchronizedTest
+         2: dup
+         3: astore_1
+         4: monitorenter
+         5: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;
+         8: ldc           #3                  // String Hello World
+        10: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+        13: aload_1
+        14: monitorexit
+        15: goto          23
+        18: astore_2
+        19: aload_1
+        20: monitorexit
+        21: aload_2
+        22: athrow
+        23: return
+```
+对于同步方法，JVM采用ACC_SYNCHRONIZED标记符来实现同步。 
+对于同步代码块。JVM采用monitorenter、monitorexit两个指令来实现同步。
+自Java 6/Java 7开始，Java虚拟机对内部锁的实现进行了一些优化。这些优化主要包括锁消除（Lock Elision）、锁粗化（Lock Coarsening）、偏向锁（Biased Locking）以及适应性自旋锁（Adaptive Locking）。这些优化仅在Java虚拟机server模式下起作用.
+
+### 4、volatile关键字解决了什么问题，实现原理是什么
 Java提供了volatile关键字来保证可见性。当一个共享变量被volatile修饰时，它会保证修改的值会立即被更新到主存，当有其他线程需要读取时，它会去内存中读取新值。可以通过volatile关键字来保证一定的“有序性”。volatile不能保证原子性。
 #### （1）happens-before原则（先行发生原则）：
 	• 程序次序规则：一个线程内，按照代码顺序，书写在前面的操作先行发生于书写在后面的操作
@@ -81,7 +150,7 @@ Java提供了volatile关键字来保证可见性。当一个共享变量被volat
 	• 它确保指令重排序时不会把其后面的指令排到内存屏障之前的位置，也不会把前面的指令排到内存屏障的后面；即在执行到内存屏障这句指令时，在它前面的操作已经全部完成；
 	• 它会强制将对缓存的修改操作立即写入主存；
 	• 如果是写操作，它会导致其他CPU中对应的缓存行无效。
-### 3、Java多线程的5大状态，以及状态图流转过程
+### 5、Java多线程的5大状态，以及状态图流转过程
 ![thread](../img/thread.png "thread")
 #### （1）新建状态(New): 
 线程对象被创建后，就进入了新建状态。例如，Thread thread = new Thread()。
