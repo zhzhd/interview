@@ -150,6 +150,7 @@ Java提供了volatile关键字来保证可见性。当一个共享变量被volat
 	• 它确保指令重排序时不会把其后面的指令排到内存屏障之前的位置，也不会把前面的指令排到内存屏障的后面；即在执行到内存屏障这句指令时，在它前面的操作已经全部完成；
 	• 它会强制将对缓存的修改操作立即写入主存；
 	• 如果是写操作，它会导致其他CPU中对应的缓存行无效。
+
 ### 5、Java多线程的5大状态，以及状态图流转过程
 ![thread](../img/thread.png "thread")
 #### （1）新建状态(New): 
@@ -167,6 +168,35 @@ Java提供了volatile关键字来保证可见性。当一个共享变量被volat
 
 #### （5）死亡状态(Dead): 
 线程执行完了或者因异常退出了run()方法，该线程结束生命周期。
+
+### 5、线程创建的方式
+#### （1）继承Thread类
+~~~
+class Thread1Test extends Thread{
+        @Override
+        public void run() {
+
+        }
+ }
+~~~
+#### （2）实现Runnable接口
+~~~
+class RunnableTest implements Runnable{
+        @Override
+        public void run() {
+
+        }
+ }
+~~~
+#### （3）实现Callable接口
+~~~
+class CallableTest implements Callable<Integer>{
+        @Override
+        public Integer call() throws Exception {
+            return null;
+        }
+}
+~~~
 ## 三、集合
 
 ## 四、IO
