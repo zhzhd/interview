@@ -214,6 +214,35 @@ class CallableTest implements Callable<Integer>{
 ### 7、线程
 
 ### 8、线程池
+线程池的构造参数如下：
+
+~~~
+public ThreadPoolExecutor(int corePoolSize,
+                              int maximumPoolSize,
+                              long keepAliveTime,
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue,
+                              ThreadFactory threadFactory,
+                              RejectedExecutionHandler handler) {
+        if (corePoolSize < 0 ||
+            maximumPoolSize <= 0 ||
+            maximumPoolSize < corePoolSize ||
+            keepAliveTime < 0)
+            throw new IllegalArgumentException();
+        if (workQueue == null || threadFactory == null || handler == null)
+            throw new NullPointerException();
+        this.acc = System.getSecurityManager() == null ?
+                null :
+                AccessController.getContext();
+        this.corePoolSize = corePoolSize;
+        this.maximumPoolSize = maximumPoolSize;
+        this.workQueue = workQueue;
+        this.keepAliveTime = unit.toNanos(keepAliveTime);
+        this.threadFactory = threadFactory;
+        this.handler = handler;
+    }
+~~~
+
 线程池的实现原理如下：
 
 ![thread-pool](../img/thread-pool.png "thread-poll")
@@ -222,7 +251,7 @@ _图片来自：https://youzhixueyuan.com/_
 #### （1）先判断线程池中的核心线程们是否空闲，如果空闲，就把这个新的任务指派给某一个空闲线程去执行。如果没有空闲，并且当前线程池中的核心线程数还小于 corePoolSize，那就再创建一个核心线程。
 #### （2）如果线程池的线程数已经达到核心线程数，并且这些线程都繁忙，就把这个新来的任务放到等待队列中去。如果等待队列又满了，那么查看一下当前线程数是否到达maximumPoolSize，如果还未到达，就继续创建线程。
 #### （3）如果已经到达了，就交给RejectedExecutionHandler(拒绝策略)来决定怎么处理这个任务。
-构造器中各个参数的含义：
+#### （4）构造器中各个参数的含义：
 
 	• corePoolSize（线程池的基本大小）
 
@@ -246,11 +275,15 @@ _图片来自：https://youzhixueyuan.com/_
 
 	• RejectedExecutionHandler（饱和策略）
 
-当队列和线程池都满了，说明线程池处于饱和状态，那么必须采取一种策略处理提交的新任务。这个策略默认情况下是AbortPolicy，表示无法处理新任务时抛出异常。以下是JDK1.5提供的四种策略。n AbortPolicy：直接抛出异常。
+当队列和线程池都满了，说明线程池处于饱和状态，那么必须采取一种策略处理提交的新任务。这个策略默认情况下是AbortPolicy，表示无法处理新任务时抛出异常。以下是JDK1.5提供的四种策略。
+AbortPolicy：直接抛出异常。
 CallerRunsPolicy：只用调用者所在线程来运行任务。
 DiscardOldestPolicy：丢弃队列里最近的一个任务，并执行当前任务。
 DiscardPolicy：不处理，丢弃掉。
 当然也可以根据应用场景需要来实现RejectedExecutionHandler接口自定义策略。如记录日志或持久化不能处理的任务。
+
+#### （5）Executors类
+Executors类，提供了一系列工厂方法用于创建线程池，返回的线程池都实现了ExecutorService接口。
 
 ## 三、集合
 
