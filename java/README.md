@@ -152,7 +152,9 @@ Java提供了volatile关键字来保证可见性。当一个共享变量被volat
 	• 如果是写操作，它会导致其他CPU中对应的缓存行无效。
 
 ### 5、Java多线程的5大状态，以及状态图流转过程
+
 ![thread](../img/thread.png "thread")
+
 #### （1）新建状态(New): 
 线程对象被创建后，就进入了新建状态。例如，Thread thread = new Thread()。
 #### （2）就绪状态(Runnable): 
@@ -213,7 +215,9 @@ class CallableTest implements Callable<Integer>{
 
 ### 8、线程池
 线程池的实现原理如下：
+
 ![thread-pool](../img/thread-pool.png "thread-poll")
+
 _图片来自：https://youzhixueyuan.com/_
 #### （1）先判断线程池中的核心线程们是否空闲，如果空闲，就把这个新的任务指派给某一个空闲线程去执行。如果没有空闲，并且当前线程池中的核心线程数还小于 corePoolSize，那就再创建一个核心线程。
 #### （2）如果线程池的线程数已经达到核心线程数，并且这些线程都繁忙，就把这个新来的任务放到等待队列中去。如果等待队列又满了，那么查看一下当前线程数是否到达maximumPoolSize，如果还未到达，就继续创建线程。
