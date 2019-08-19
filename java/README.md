@@ -422,7 +422,7 @@ b.注册Channel到Selector
 channel.configureBlocking(false);
 SelectionKey key =channel.register(selector,SelectionKey.OP_READ);
 ~~~
-### 4、NIO2(异步、非阻塞)
+#### 4、NIO2(异步、非阻塞)
  在JDK1.7中，这部分内容被称作NIO.2，主要在Java.nio.channels包下增加了下面四个异步通道：
  a.AsynchronousSocketChannel
  b.AsynchronousServerSocketChannel
