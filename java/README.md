@@ -289,4 +289,98 @@ Executors类，提供了一系列工厂方法用于创建线程池，返回的�
 
 ## 四、IO
 
+### 1、IO的分类
+从数据传输方式或者说是运输方式角度看，可以将 IO 类分为字节流和字符流。字节流读取单个字节，字符流读取单个字符（一个字符根据编码的不同，对应的字节也不同，如 UTF-8 编码是 3 个字节，中文编码是 2 个字节。）字节流用来处理二进制文件（图片、MP3、视频文件），字符流用来处理文本文件（可以看做是特殊的二进制文件，使用了某种编码，人可以阅读）。简而言之，字节是个计算机看的，字符才是给人看的。
+字节流和字符流的划分可以看下面这张图：
+![io](../img/io.png "io")
+
+`图片来源：https://www.jianshu.com/p/715659e4775f`
+
+下面介绍几个常用的IO类
+### 2、常用IO类型 (同步、阻塞)
+#### （1）FileInputStream与FileOutputStream
+~~~
+    @Test
+    public void fileIOStreamTest() throws Exception{
+        File file = new File(fileName);
+        FileInputStream inputStream = new FileInputStream(file);
+        byte[] b = new byte[1];
+        File file2 = new File(fileName2);
+        FileOutputStream outputStream = new FileOutputStream(file2);
+        while (inputStream.read(b, 0, 1) != -1){
+            outputStream.write(b);
+        }
+    }
+~~~
+#### （2）BufferedInputStream与BufferedOutputStream
+~~~
+    @Test
+    public void bufferedIOStreamTest() throws Exception{
+        File file1 = new File(fileName);
+        InputStream inputStream = new FileInputStream(file1);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+        byte[] b = new byte[2];
+        File file2 = new File(fileName2);
+        OutputStream outputStream = new FileOutputStream(file2);
+        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+        while (bufferedInputStream.read(b) != -1){
+            bufferedOutputStream.write(b, 0 , 2);
+        }
+        bufferedOutputStream.flush();
+        bufferedOutputStream.close();
+        outputStream.close();
+        bufferedInputStream.close();
+        inputStream.close();
+    }
+~~~
+#### （3）FileReader和FileWriter
+#### （4）InputStreamReader与OutputStreamWriter
+#### （5）BufferedReader与BufferedWriter
+~~~
+    @Test
+    public void fileReaderWriterTest() throws Exception{
+        String fileName1 = "fileReader1.txt";
+        String fileName2 = "fileReader2.txt";
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName1), "UTF-8"));
+        char[] c = new char[5];
+        BufferedWriter writer = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (fileName2,true),"UTF-8"));
+        while (reader.read(c) != -1){
+            writer.write(c);
+        }
+        writer.flush();
+        writer.close();
+        reader.close();
+    }
+~~~
+
+### 3、NIO(同步、非阻塞)
+NIO之所以是同步，是因为它的accept/read/write方法的内核I/O操作都会阻塞当前线程
+NIO的三个主要组成部分：Channel（通道）、Buffer（缓冲区）、Selector（选择器）
+
+#### （1）Channel（通道）
+Channel是一个对象，可以通过它读取和写入数据。可以把它看做是IO中的流，不同的是：Channel是双向的，既可以读又可以写，而流是单向的、
+Channel可以进行异步的读写、对Channel的读写必须通过buffer对象。Channel主要有如下几种类型：
+a.FileChannel：从文件读取数据的
+b.DatagramChannel：读写UDP网络协议数据
+c.SocketChannel：读写TCP网络协议数据
+e.ServerSocketChannel：可以监听TCP连接
+#### （2）Buffer
+所有的数据都是用Buffer处理的，它是NIO读写数据的中转池。Buffer实质上是一个数组，通常是一个字节数据，但也可以是其他类型的数组。但一个缓冲区不仅仅是一个数组，重要的是它提供了对数据的结构化访问，而且还可以跟踪系统的读写进程。
+Buffer 读写数据一般遵循以下四个步骤：
+a.写入数据到 Buffer；
+b.调用 flip() 方法；
+c.从 Buffer 中读取数据；
+d.调用 clear() 方法或者 compact() 方法。
+有两种方式能清空缓冲区：调用 clear() 或 compact() 方法。clear() 方法会清空整个缓冲区。compact() 方法只会清除已经读过的数据。任何未读的数据都被移到缓冲区的起始处，新写入的数据将放到缓冲区未读数据的后面。
+Buffer主要有如下几种：
+a.ByteBuffer
+b.CharBuffer
+c.DoubleBuffer
+d.FloatBuffer
+e.IntBuffer
+f.LongBuffer
+g.ShortBuffer
+#### （3）Selector（选择器对象）
+### 4、NIO2(异步、非阻塞)
+
 ## 五、Java虚拟机
