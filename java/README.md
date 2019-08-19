@@ -292,6 +292,7 @@ Executors类，提供了一系列工厂方法用于创建线程池，返回的�
 ### 1、IO的分类
 从数据传输方式或者说是运输方式角度看，可以将 IO 类分为字节流和字符流。字节流读取单个字节，字符流读取单个字符（一个字符根据编码的不同，对应的字节也不同，如 UTF-8 编码是 3 个字节，中文编码是 2 个字节。）字节流用来处理二进制文件（图片、MP3、视频文件），字符流用来处理文本文件（可以看做是特殊的二进制文件，使用了某种编码，人可以阅读）。简而言之，字节是个计算机看的，字符才是给人看的。
 字节流和字符流的划分可以看下面这张图：
+
 ![io](../img/io.png "io")
 
 `图片来源：https://www.jianshu.com/p/715659e4775f`
@@ -380,7 +381,52 @@ d.FloatBuffer
 e.IntBuffer
 f.LongBuffer
 g.ShortBuffer
+
+~~~
+public static void copyFile(String src, String dst) throws Exception{
+        FileInputStream inputStream = new FileInputStream(new File(src));
+        FileOutputStream outputStream = new FileOutputStream(new File(dst));
+        /获得传输通道channel
+        FileChannel inChannel = inputStream.getChannel();
+        FileChannel outChannel = outputStream.getChannel();
+        //获得容器buffer
+        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+        while (true){
+            //判断是否读完文件
+            int eof = inChannel.read(byteBuffer);
+            if (eof == -1){
+                break;
+            }
+             //重设一下buffer的position=0，limit=position
+            byteBuffer.flip();
+            //开始写
+            outChannel.write(byteBuffer);
+            //写完要重置buffer，重设position=0,limit=capacity
+            byteBuffer.clear();
+        }
+        inChannel.close();
+        outChannel.close();
+        inputStream.close();
+        outputStream.close();
+}
+~~~
 #### （3）Selector（选择器对象）
+Selector是一个对象，它可以注册到很多个Channel上，监听各个Channel上发生的事件，并且能够根据事件情况决定Channel读写。这样，通过一个线程管理多个Channel，就可以处理大量网络连接了。
+a.创建一个Selector
+~~~
+Selector selector = Selector.open();
+~~~
+b.注册Channel到Selector
+~~~
+//注册的Channel 必须设置成异步模式 才可以,否则异步IO就无法工作
+channel.configureBlocking(false);
+SelectionKey key =channel.register(selector,SelectionKey.OP_READ);
+~~~
 ### 4、NIO2(异步、非阻塞)
+ 在JDK1.7中，这部分内容被称作NIO.2，主要在Java.nio.channels包下增加了下面四个异步通道：
+ a.AsynchronousSocketChannel
+ b.AsynchronousServerSocketChannel
+ c.AsynchronousFileChannel
+ d.AsynchronousDatagramChannel
 
 ## 五、Java虚拟机
