@@ -284,6 +284,13 @@ DiscardPolicy：不处理，丢弃掉。
 
 #### （5）Executors类
 Executors类，提供了一系列工厂方法用于创建线程池，返回的线程池都实现了ExecutorService接口。
+#### （6）重入锁ReentrantLock
+#### （7）重入锁的搭档Condition
+#### （8）信号量Semaphore
+#### （9）读写锁ReadWriteLock
+#### （10）倒计数器CountDownLatch
+#### （11）循环栅栏CyclicBarrier
+#### （12）线程阻塞工具LockSupport
 
 ## 三、集合
 
