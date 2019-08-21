@@ -285,6 +285,33 @@ DiscardPolicy：不处理，丢弃掉。
 #### （5）Executors类
 Executors类，提供了一系列工厂方法用于创建线程池，返回的线程池都实现了ExecutorService接口。
 #### （6）重入锁ReentrantLock
+
+~~~
+public class ReentrantLockTest {
+    public static ReentrantLock lock = new ReentrantLock();
+    public static int i = 0;
+    private static Runnable runnable = () -> IntStream.range(0, 10000).forEach((j)->{
+        lock.lock();
+        try {
+            i++;
+        } finally {
+            lock.unlock();
+        }
+    });
+
+    @Test
+    public void reentrantLockTest() throws Exception{
+        Thread thread1 = new Thread(runnable);
+        Thread thread2 = new Thread(runnable);
+        thread1.start();
+        thread2.start();
+        thread1.join();
+        thread2.join();
+        System.out.println(i);
+    }
+}
+~~~
+
 #### （7）重入锁的搭档Condition
 #### （8）信号量Semaphore
 #### （9）读写锁ReadWriteLock
@@ -457,3 +484,41 @@ SelectionKey key =channel.register(selector,SelectionKey.OP_READ);
  d.AsynchronousDatagramChannel
  
 ## 五、Java虚拟机
+### 1、虚拟机运行时数据区域
+#### （1）程序计数器：
+当前线程所执行的字节码的行号指示器。如果是java方法记录字节码指令地址，如果是本地方法，则为空。是线程私有的，没有OutOfMemoryError
+#### （2）java虚拟机栈：
+每个方法在执行的同时都会创建一个栈帧（Stack Frame)用于存储局部变量表、操作数栈、动态链接、方法出口等信息。是线程私有的。有StackOverflowError和OutOfMemoryError
+
+#### （3）本地方法栈：
+本地方法栈则为虚拟机使用到的Native方法服务。本地方法栈区域也会抛出StackOverflowError和OutOfMemoryError异常
+#### （4）java堆：
+线程共享的。所有的对象实例以及数组都要在堆上分配，但是，并不是绝对的。Java堆中还可以细分为：新生代和老年代；再细致一点的有Eden空间、From Survivor空间、To Survivor空间等。
+#### （5）方法区：
+线程共享的。用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据。也称为永久代
+#### （6）运行时常量池：
+用于存放编译期生成的各种字面量和符号引用，是方法区的一部分
+#### （7）直接内存：
+NIO中引入了一种基于通道（Channel）与缓冲区（Buffer）的I/O方式，它可以使用Native函数库直接分配堆外内存，然后通过一个存储在Java堆中的DirectByteBuffer对象作为这块内存的引用进行操作。这样能在一些场景中显著提高性能，因为避免了在Java堆和Native堆中来回复制数据。
+### 2、判断对象是否存活
+#### （1）引用计数法：给对象中添加一个引用计数器，每当有一个地方引用它时，计数器值就加1；当引用失效时，计数器值就减1；任何时刻计数器为0的对象就是不可能再被使用的。
+#### （2）可达性分析算法：当一个对象到GC Roots没有任何引用链相连（用图论的话来说，就是从GC Roots到这个对象不可达）时，则证明此对象是不可用的。
+#### （3）在Java语言中，可作为GC Roots的对象包括下面几种：
+
+虚拟机栈（栈帧中的本地变量表）中引用的对象。
+
+方法区中类静态属性引用的对象。
+
+方法区中常量引用的对象。
+
+本地方法栈中JNI（即一般说的Native方法）引用的对象
+
+### 3、引用类型
+在JDK 1.2之后，Java对引用的概念进行了扩充，将引用分为强引用（Strong Reference）、软引用（Soft Reference）、弱引用（Weak Reference）、虚引用（Phantom Reference）4种
+### 4、垃圾收集算法
+
+#### （1）标记-清除算法
+
+#### （2）复制算法
+
+#### （3）标记整理算法
