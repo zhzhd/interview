@@ -316,8 +316,241 @@ public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) 
         return new ScheduledThreadPoolExecutor(corePoolSize);
 }
 ~~~
+#### （6）重入锁ReentrantLock
+
+~~~
+public class ReentrantLockTest {
+    public static ReentrantLock lock = new ReentrantLock();
+    public static int i = 0;
+    private static Runnable runnable = () -> IntStream.range(0, 10000).forEach((j)->{
+        lock.lock();
+        try {
+            i++;
+        } finally {
+            lock.unlock();
+        }
+    });
+
+    @Test
+    public void reentrantLockTest() throws Exception{
+        Thread thread1 = new Thread(runnable);
+        Thread thread2 = new Thread(runnable);
+        thread1.start();
+        thread2.start();
+        thread1.join();
+        thread2.join();
+        System.out.println(i);
+    }
+}
+~~~
+
+#### （7）重入锁的搭档Condition
+#### （8）信号量Semaphore
+#### （9）读写锁ReadWriteLock
+#### （10）倒计数器CountDownLatch
+#### （11）循环栅栏CyclicBarrier
+#### （12）线程阻塞工具LockSupport
+
 ## 三、集合
 
 ## 四、IO
 
+### 1、IO的分类
+从数据传输方式或者说是运输方式角度看，可以将 IO 类分为字节流和字符流。字节流读取单个字节，字符流读取单个字符（一个字符根据编码的不同，对应的字节也不同，如 UTF-8 编码是 3 个字节，中文编码是 2 个字节。）字节流用来处理二进制文件（图片、MP3、视频文件），字符流用来处理文本文件（可以看做是特殊的二进制文件，使用了某种编码，人可以阅读）。简而言之，字节是个计算机看的，字符才是给人看的。
+字节流和字符流的划分可以看下面这张图：
+
+![io](../img/IO.png "io")
+
+`图片来源：https://www.jianshu.com/p/715659e4775f`
+
+下面介绍几个常用的IO类
+### 2、常用IO类型 (同步、阻塞)
+#### （1）FileInputStream与FileOutputStream
+~~~
+    @Test
+    public void fileIOStreamTest() throws Exception{
+        File file = new File(fileName);
+        FileInputStream inputStream = new FileInputStream(file);
+        byte[] b = new byte[1];
+        File file2 = new File(fileName2);
+        FileOutputStream outputStream = new FileOutputStream(file2);
+        while (inputStream.read(b, 0, 1) != -1){
+            outputStream.write(b);
+        }
+    }
+~~~
+#### （2）BufferedInputStream与BufferedOutputStream
+~~~
+    @Test
+    public void bufferedIOStreamTest() throws Exception{
+        File file1 = new File(fileName);
+        InputStream inputStream = new FileInputStream(file1);
+        BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
+        byte[] b = new byte[2];
+        File file2 = new File(fileName2);
+        OutputStream outputStream = new FileOutputStream(file2);
+        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+        while (bufferedInputStream.read(b) != -1){
+            bufferedOutputStream.write(b, 0 , 2);
+        }
+        bufferedOutputStream.flush();
+        bufferedOutputStream.close();
+        outputStream.close();
+        bufferedInputStream.close();
+        inputStream.close();
+    }
+~~~
+#### （3）FileReader和FileWriter
+#### （4）InputStreamReader与OutputStreamWriter
+#### （5）BufferedReader与BufferedWriter
+~~~
+    @Test
+    public void fileReaderWriterTest() throws Exception{
+        String fileName1 = "fileReader1.txt";
+        String fileName2 = "fileReader2.txt";
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName1), "UTF-8"));
+        char[] c = new char[5];
+        BufferedWriter writer = new BufferedWriter (new OutputStreamWriter (new FileOutputStream (fileName2,true),"UTF-8"));
+        while (reader.read(c) != -1){
+            writer.write(c);
+        }
+        writer.flush();
+        writer.close();
+        reader.close();
+    }
+~~~
+
+### 3、NIO(同步、非阻塞)
+NIO之所以是同步，是因为它的accept/read/write方法的内核I/O操作都会阻塞当前线程
+NIO的三个主要组成部分：Channel（通道）、Buffer（缓冲区）、Selector（选择器）
+
+#### （1）Channel（通道）
+Channel是一个对象，可以通过它读取和写入数据。可以把它看做是IO中的流，不同的是：Channel是双向的，既可以读又可以写，而流是单向的、
+Channel可以进行异步的读写、对Channel的读写必须通过buffer对象。Channel主要有如下几种类型：
+
+a.FileChannel：从文件读取数据的
+
+b.DatagramChannel：读写UDP网络协议数据
+
+c.SocketChannel：读写TCP网络协议数据
+
+e.ServerSocketChannel：可以监听TCP连接
+
+#### （2）Buffer
+所有的数据都是用Buffer处理的，它是NIO读写数据的中转池。Buffer实质上是一个数组，通常是一个字节数据，但也可以是其他类型的数组。但一个缓冲区不仅仅是一个数组，重要的是它提供了对数据的结构化访问，而且还可以跟踪系统的读写进程。
+Buffer 读写数据一般遵循以下四个步骤：
+
+a.写入数据到 Buffer；
+
+b.调用 flip() 方法；
+
+c.从 Buffer 中读取数据；
+
+d.调用 clear() 方法或者 compact() 方法。
+
+有两种方式能清空缓冲区：调用 clear() 或 compact() 方法。clear() 方法会清空整个缓冲区。compact() 方法只会清除已经读过的数据。任何未读的数据都被移到缓冲区的起始处，新写入的数据将放到缓冲区未读数据的后面。
+Buffer主要有如下几种：
+
+a.ByteBuffer
+
+b.CharBuffer
+
+c.DoubleBuffer
+
+d.FloatBuffer
+
+e.IntBuffer
+
+f.LongBuffer
+
+g.ShortBuffer
+
+~~~
+public static void copyFile(String src, String dst) throws Exception{
+        FileInputStream inputStream = new FileInputStream(new File(src));
+        FileOutputStream outputStream = new FileOutputStream(new File(dst));
+        /获得传输通道channel
+        FileChannel inChannel = inputStream.getChannel();
+        FileChannel outChannel = outputStream.getChannel();
+        //获得容器buffer
+        ByteBuffer byteBuffer = ByteBuffer.allocate(1024);
+        while (true){
+            //判断是否读完文件
+            int eof = inChannel.read(byteBuffer);
+            if (eof == -1){
+                break;
+            }
+             //重设一下buffer的position=0，limit=position
+            byteBuffer.flip();
+            //开始写
+            outChannel.write(byteBuffer);
+            //写完要重置buffer，重设position=0,limit=capacity
+            byteBuffer.clear();
+        }
+        inChannel.close();
+        outChannel.close();
+        inputStream.close();
+        outputStream.close();
+}
+~~~
+#### （3）Selector（选择器对象）
+Selector是一个对象，它可以注册到很多个Channel上，监听各个Channel上发生的事件，并且能够根据事件情况决定Channel读写。这样，通过一个线程管理多个Channel，就可以处理大量网络连接了。
+a.创建一个Selector
+~~~
+Selector selector = Selector.open();
+~~~
+b.注册Channel到Selector
+~~~
+//注册的Channel 必须设置成异步模式 才可以,否则异步IO就无法工作
+channel.configureBlocking(false);
+SelectionKey key =channel.register(selector,SelectionKey.OP_READ);
+~~~
+#### 4、NIO2(异步、非阻塞)
+ 在JDK1.7中，这部分内容被称作NIO.2，主要在Java.nio.channels包下增加了下面四个异步通道：
+ a.AsynchronousSocketChannel
+ 
+ b.AsynchronousServerSocketChannel
+ 
+ c.AsynchronousFileChannel
+ 
+ d.AsynchronousDatagramChannel
+ 
 ## 五、Java虚拟机
+### 1、虚拟机运行时数据区域
+#### （1）程序计数器：
+当前线程所执行的字节码的行号指示器。如果是java方法记录字节码指令地址，如果是本地方法，则为空。是线程私有的，没有OutOfMemoryError
+#### （2）java虚拟机栈：
+每个方法在执行的同时都会创建一个栈帧（Stack Frame)用于存储局部变量表、操作数栈、动态链接、方法出口等信息。是线程私有的。有StackOverflowError和OutOfMemoryError
+
+#### （3）本地方法栈：
+本地方法栈则为虚拟机使用到的Native方法服务。本地方法栈区域也会抛出StackOverflowError和OutOfMemoryError异常
+#### （4）java堆：
+线程共享的。所有的对象实例以及数组都要在堆上分配，但是，并不是绝对的。Java堆中还可以细分为：新生代和老年代；再细致一点的有Eden空间、From Survivor空间、To Survivor空间等。
+#### （5）方法区：
+线程共享的。用于存储已被虚拟机加载的类信息、常量、静态变量、即时编译器编译后的代码等数据。也称为永久代
+#### （6）运行时常量池：
+用于存放编译期生成的各种字面量和符号引用，是方法区的一部分
+#### （7）直接内存：
+NIO中引入了一种基于通道（Channel）与缓冲区（Buffer）的I/O方式，它可以使用Native函数库直接分配堆外内存，然后通过一个存储在Java堆中的DirectByteBuffer对象作为这块内存的引用进行操作。这样能在一些场景中显著提高性能，因为避免了在Java堆和Native堆中来回复制数据。
+### 2、判断对象是否存活
+#### （1）引用计数法：给对象中添加一个引用计数器，每当有一个地方引用它时，计数器值就加1；当引用失效时，计数器值就减1；任何时刻计数器为0的对象就是不可能再被使用的。
+#### （2）可达性分析算法：当一个对象到GC Roots没有任何引用链相连（用图论的话来说，就是从GC Roots到这个对象不可达）时，则证明此对象是不可用的。
+#### （3）在Java语言中，可作为GC Roots的对象包括下面几种：
+
+虚拟机栈（栈帧中的本地变量表）中引用的对象。
+
+方法区中类静态属性引用的对象。
+
+方法区中常量引用的对象。
+
+本地方法栈中JNI（即一般说的Native方法）引用的对象
+
+### 3、引用类型
+在JDK 1.2之后，Java对引用的概念进行了扩充，将引用分为强引用（Strong Reference）、软引用（Soft Reference）、弱引用（Weak Reference）、虚引用（Phantom Reference）4种
+### 4、垃圾收集算法
+
+#### （1）标记-清除算法
+
+#### （2）复制算法
+
+#### （3）标记整理算法
